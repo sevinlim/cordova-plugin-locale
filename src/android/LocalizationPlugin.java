@@ -25,6 +25,7 @@ import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.LOG;
 import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 
@@ -108,7 +109,12 @@ public class LocalizationPlugin extends CordovaPlugin {
 //    return stringMap;
 //  }
 
-  public String getAll() {
+  public String getAll(JSONArray resIds) throws JSONException {
+    if (resIds != null) {
+      for (int i=0; i<resIds.length(); ++i) {
+        get(resIds.getString(i));
+      }
+    }
     return stringMap.toString();
   }
 
@@ -143,7 +149,13 @@ public class LocalizationPlugin extends CordovaPlugin {
         return false;
       }
     } else if (action.equals(ACTION_GET_ALL)) {
-      String resString = getAll();
+      JSONArray resIds = null;
+      try {
+        resIds = args.getJSONArray(0);
+      } catch (JSONException je) {
+        // no res ids
+      }
+      String resString = getAll(resIds);
       if (resString == null) {
         callbackContext.success(resString);
       } else {

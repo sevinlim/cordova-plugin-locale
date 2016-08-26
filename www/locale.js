@@ -20,11 +20,11 @@ module.exports = {
         cordova.exec(success, failure, 'localization', 'get', [id]);
     },
 
-    getAll: function (success, failure) {
+    getAll: function (ids, success, failure) {
         var successWrapper = function(_strings) {
             success(JSON.parse(_strings));
         };
-        cordova.exec(successWrapper, failure, 'localization', 'getAll', []);
+        cordova.exec(successWrapper, failure, 'localization', 'getAll', [ids]);
     },
 
     register: function (success, failure) {
