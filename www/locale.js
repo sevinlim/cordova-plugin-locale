@@ -26,4 +26,12 @@ module.exports = {
         };
         cordova.exec(successWrapper, failure, 'localization', 'getAll', []);
     },
+
+    register: function (success, failure) {
+        cordova.exec(success, failure, 'localization', 'registerOnChange', []);
+    },
+
+    unregister: function (success, failure) {
+        cordova.exec(success, failure, 'localization', 'unregisterOnChange', []);
+    }
 };

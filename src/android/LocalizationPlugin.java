@@ -24,9 +24,7 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.LOG;
-import org.apache.cordova.PermissionHelper;
 import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 
@@ -37,11 +35,16 @@ public class LocalizationPlugin extends CordovaPlugin {
   // actions
   private static final String ACTION_GET = "get";
   private static final String ACTION_GET_ALL = "getAll";
+  private static final String ACTION_GET_LOCALE = "getLocale";
+  private static final String ACTION_REGISTER_CALLBACK = "registerOnChange";
+  private static final String ACTION_UNREGISTER_CALLBACK = "unregisterOnChange";
 
   private static final String TAG = "LocalizationPlugin";
 
   private JSONObject stringMap = new JSONObject();
   private BroadcastReceiver localeChangeReceiver = null;
+
+  private CallbackContext localeChangeCallback = null;
 
 //  ACTION_LOCALE_CHANGED
 
@@ -54,6 +57,7 @@ public class LocalizationPlugin extends CordovaPlugin {
     localeChangeReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
+        LOG.e(TAG, "Locale Updated");
         // update stored strings
         Iterator<String> jsonKeys = stringMap.keys();
         while (jsonKeys.hasNext()) {
@@ -64,9 +68,15 @@ public class LocalizationPlugin extends CordovaPlugin {
             LOG.e(TAG, "Can't update string with key: "+key);
           }
         }
+        if (localeChangeCallback != null) {
+          PluginResult result = new PluginResult(PluginResult.Status.OK, getLocale());
+          result.setKeepCallback(true);
+          localeChangeCallback.sendPluginResult(result);
+//          localeChangeCallback.success(Locale.getDefault().getDisplayLanguage());
+        }
       }
     };
-      activity.registerReceiver(localeChangeReceiver, filter);
+    activity.registerReceiver(localeChangeReceiver, filter);
   }
 
   private String getFromResource(String resourceId) {
@@ -115,20 +125,13 @@ public class LocalizationPlugin extends CordovaPlugin {
     return resString;
   }
 
-  // public String getLocale() {
-  //     return Locale.getDefault().getDisplayLanguage();
-  // }
+   public String getLocale() {
+       return Locale.getDefault().getDisplayLanguage();
+   }
 
   @Override
   public boolean execute(String action, CordovaArgs args, CallbackContext callbackContext) throws JSONException {
     registerLocaleChange();
-//    if (stringMap == null) {
-//      try {
-////        getStringMap();
-//      } catch (Exception e) {
-//        callbackContext.error(e.getMessage());
-//      }
-//    }
 
     if (action.equals(ACTION_GET)) {
       String resourceId = args.getString(0);
@@ -147,6 +150,12 @@ public class LocalizationPlugin extends CordovaPlugin {
         callbackContext.error("Resource file not found");
         return false;
       }
+    } else if (action.equals(ACTION_REGISTER_CALLBACK)) {
+      localeChangeCallback = callbackContext;
+    } else if (action.equals(ACTION_UNREGISTER_CALLBACK)) {
+      localeChangeCallback = null;
+    } else if (action.equals((ACTION_GET_LOCALE))) {
+      callbackContext.success(getLocale());
     } else {
       callbackContext.error("Invalid action");
       return false;
