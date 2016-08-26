@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-locale",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Get device localised strings",
   "cordova": {
     "id": "cordova-plugin-locale",

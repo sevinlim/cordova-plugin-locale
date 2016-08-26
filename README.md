@@ -21,7 +21,7 @@ It also allows registering a callback to listen for a change in locale.
 
     $ ionic plugin add https://github.com/sevinlim/cordova-plugin-locale.git
 
-## Methods
+# Methods
 
 - [localization.get](#get)
 - [localization.getAll](#getAll)
