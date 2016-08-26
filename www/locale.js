@@ -17,16 +17,13 @@
 
 module.exports = {
     get: function (id, success, failure) {
-        var successWrapper = function(string) {
-            success(string);
-        };
-        cordova.exec(successWrapper, failure, 'BLE', 'get');
+        cordova.exec(success, failure, 'localization', 'get', [id]);
     },
 
     getAll: function (success, failure) {
         var successWrapper = function(_strings) {
             success(JSON.parse(_strings));
         };
-        cordova.exec(successWrapper, failure, 'BLE', 'getAll');
+        cordova.exec(successWrapper, failure, 'localization', 'getAll', []);
     },
 };
