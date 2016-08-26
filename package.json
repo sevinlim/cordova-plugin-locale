@@ -1,0 +1,31 @@
+{
+  "name": "cordova-plugin-locale",
+  "version": "1.0.0",
+  "description": "Get device localised strings",
+  "cordova": {
+    "id": "cordova-plugin-locale",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sevinlim/cordova-plugin-locale.git"
+  },
+  "keywords": [
+    "cordova",
+    "locale",
+    "globalization",
+    "strings",
+    "xml",
+    "ecosystem:cordova",
+    "cordova-ios",
+    "cordova-android"
+  ],
+  "author": "Sevin Lim <sevin.lim@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/sevinlim/cordova-plugin-locale/issues"
+  },
+  "homepage": "https://github.com/sevinlim/cordova-plugin-locale.git#readme"
+}
