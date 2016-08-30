@@ -41,6 +41,10 @@ Get the localized string with a given id
 - __success__: Success callback function
 - __failure__: Error callback function
 
+### Returns
+
+- __string__: String value
+
 ### Quick Example
 
     localization.get('app_name', function(_string) {
@@ -59,6 +63,10 @@ Get all the localized string that have been retrieved before
 - __success__: Success callback function
 - __failure__: Error callback function
 
+### Returns
+
+- __string__: JSON string map with (string_id, string_value) pairs
+
 ### Quick Example
 
     localization.getAll(function(_stringJson) {
@@ -75,6 +83,10 @@ Get the device locale
 
 - __success__: Success callback function
 - __failure__: Error callback function
+
+### Returns
+
+- __string__: String locale
 
 ### Quick Example
 
@@ -94,8 +106,33 @@ Register a listener for when the device locale is changed
 - __success__: Success callback function, gets callback everytime locale is changed until unregistered
 - __failure__: Error callback function
 
+### Returns
+
+- __string__: Callback ID (NO_RESULT), Locale (RESULT_OK)
+
 ### Quick Example
 
     localization.register(function(_locale) {
+        console.log(_locale);
+    }, failure);
+
+
+## unregister
+
+Unregister a previous listener with callback ID
+
+    localization.register(success, failure);
+
+### Parameters
+
+- __callback_id__: Callback ID for listener
+- __success__: Success callback function, gets callback everytime locale is changed until unregistered
+- __failure__: Error callback function
+
+### Returns
+
+### Quick Example
+
+    localization.unregister(callbackId, function(_locale) {
         console.log(_locale);
     }, failure);

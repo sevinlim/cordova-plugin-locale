@@ -31,7 +31,7 @@ module.exports = {
         cordova.exec(success, failure, 'localization', 'registerOnChange', []);
     },
 
-    unregister: function (success, failure) {
-        cordova.exec(success, failure, 'localization', 'unregisterOnChange', []);
+    unregister: function (callbackId, success, failure) {
+        cordova.exec(success, failure, 'localization', 'unregisterOnChange', [callbackId]);
     }
 };

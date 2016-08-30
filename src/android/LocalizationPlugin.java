@@ -43,27 +43,46 @@ public class LocalizationPlugin extends CordovaPlugin {
 
   private static final String TAG = "LocalizationPlugin";
 
-  private JSONObject stringMap = new JSONObject();
+  private JSONObject stringMap = null;
+  private IntentFilter localeChangeIntent = null;
   private BroadcastReceiver localeChangeReceiver = null;
-
-  private CallbackContext localeChangeCallback = null;
+  private Map<String, CallbackContext> localeChangeListeners;
 
   private Activity cordovaActivity;
-
-//  ACTION_LOCALE_CHANGED
 
   @Override
   protected void pluginInitialize() {
     super.pluginInitialize();
     cordovaActivity = cordova.getActivity();
-    registerLocaleChange();
+    stringMap = new JSONObject();
+    localeChangeListeners = new HashMap<String, CallbackContext>();
+    initLocaleChangeReceiver();
+    onStart();
   }
 
-  private void registerLocaleChange() {
+  @Override
+  public void onStart() {
+    try {
+      cordovaActivity.registerReceiver(localeChangeReceiver, localeChangeIntent);
+    } catch (IllegalArgumentException e) {
+      Log.e(TAG, e.getLocalizedMessage());
+    }
+  }
+
+  @Override
+  public void onStop() {
+    try {
+      cordovaActivity.unregisterReceiver(localeChangeReceiver);
+    } catch (IllegalArgumentException e) {
+      Log.e(TAG, e.getLocalizedMessage());
+    }
+  }
+
+  private void initLocaleChangeReceiver() {
     if (localeChangeReceiver != null) {
       return;
     }
-    IntentFilter filter = new IntentFilter(Intent.ACTION_LOCALE_CHANGED);
+    localeChangeIntent = new IntentFilter(Intent.ACTION_LOCALE_CHANGED);
     localeChangeReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
@@ -74,24 +93,27 @@ public class LocalizationPlugin extends CordovaPlugin {
           try {
             stringMap.put(key, getFromResource(key));
           } catch (JSONException e) {
-            LOG.e(TAG, "Can't update string with key: "+key);
+//            Log.e(TAG, "Can't update string with key: "+key);
           }
         }
-        if (localeChangeCallback != null) {
+        if (!localeChangeListeners.isEmpty()) {
           PluginResult result = new PluginResult(PluginResult.Status.OK, getLocale());
           result.setKeepCallback(true);
-          localeChangeCallback.sendPluginResult(result);
+          for (CallbackContext listener : localeChangeListeners.values()) {
+            listener.sendPluginResult(result);
+          }
+//          localeChangeCallback.success(Locale.getDefault().getDisplayLanguage());
         }
       }
     };
-    cordovaActivity.registerReceiver(localeChangeReceiver, filter);
   }
 
   private String getFromResource(String resourceId) {
     int identifier = cordovaActivity.getResources().getIdentifier(resourceId, "string", cordovaActivity.getPackageName());
-    if (identifier == 0) {
+    if (identifier <= 0) {
       return null;
     }
+//    Log.d(TAG, "Get String with Identifier "+identifier);
     String resString = cordovaActivity.getResources().getString(identifier);
     return resString;
   }
@@ -115,12 +137,14 @@ public class LocalizationPlugin extends CordovaPlugin {
 //    return stringMap;
 //  }
 
-  public String getSingle(String resourceId) throws JSONException {
+  private String get(String resourceId) throws JSONException {
     String resString;
     if (!stringMap.has(resourceId)) {
       resString = getFromResource(resourceId);
       if (resString != null) {
         stringMap.put(resourceId, resString);
+      } else {
+        Log.d(TAG, "Resource string null for id: "+resourceId);
       }
     } else {
       resString = stringMap.getString(resourceId);
@@ -128,14 +152,15 @@ public class LocalizationPlugin extends CordovaPlugin {
     return resString;
   }
 
-  public String getAll(JSONArray resIds) throws JSONException {
+  private String getAll(JSONArray resIds) throws JSONException {
     if (resIds != null) {
       for (int i=0; i<resIds.length(); ++i) {
-        getSingle(resIds.getString(i));
+        get(resIds.getString(i));
       }
     }
     return stringMap.toString();
   }
+
 
    public String getLocale() {
        return Locale.getDefault().getDisplayLanguage();
@@ -145,36 +170,44 @@ public class LocalizationPlugin extends CordovaPlugin {
   public boolean execute(String action, CordovaArgs args, CallbackContext callbackContext) throws JSONException {
     if (action.equals(ACTION_GET)) {
       String resourceId = args.getString(0);
-      String resString = getSingle(resourceId);
+      String resString = get(resourceId);
       if (resString != null) {
         callbackContext.success(resString);
       } else {
         callbackContext.error("Resource not found: " + resourceId);
-        return false;
       }
     } else if (action.equals(ACTION_GET_ALL)) {
+      LOG.d(TAG, args.toString());
       JSONArray resIds = null;
       try {
         resIds = args.getJSONArray(0);
       } catch (JSONException je) {
         // no res ids
+        callbackContext.error("Resource ID Error: "+je.getLocalizedMessage());
       }
+      Log.d(TAG, "getAll: "+resIds);
       String resString = getAll(resIds);
       if (resString != null) {
         callbackContext.success(resString);
       } else {
-        callbackContext.error("Resource file not found");
-        return false;
+        callbackContext.error("GETALL: Resource not found: "+resIds);
       }
     } else if (action.equals(ACTION_REGISTER_CALLBACK)) {
-      localeChangeCallback = callbackContext;
+      localeChangeListeners.put(callbackContext.getCallbackId(), callbackContext);
+      PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT, callbackContext.getCallbackId());
+      result.setKeepCallback(true);
+      callbackContext.sendPluginResult(result);
     } else if (action.equals(ACTION_UNREGISTER_CALLBACK)) {
-      localeChangeCallback = null;
+      String callbackId = args.getString(0);
+      if (callbackId != null && localeChangeListeners.containsKey(callbackId)) {
+        localeChangeListeners.remove(callbackId);
+      } else {
+        callbackContext.error("Callback ID invalid.");
+      }
     } else if (action.equals((ACTION_GET_LOCALE))) {
       callbackContext.success(getLocale());
     } else {
-      callbackContext.error("Invalid action");
-      return false;
+      callbackContext.error("Invalid action: "+action);
     }
     return true;
   }
